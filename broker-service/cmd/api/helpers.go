@@ -71,3 +71,23 @@ func (app *Config) errorJson(w http.ResponseWriter, err error, status ...int) er
 	return app.writeJson(w, statusCode, payload)
 
 }
+
+func (app *Config) readJsonToStruct(w http.ResponseWriter, jsonData io.ReadCloser, data any) error {
+	maxBytes := 1048576 //1 MB
+
+	jsonData = http.MaxBytesReader(w, jsonData, int64(maxBytes))
+
+	dec := json.NewDecoder(jsonData)
+	err := dec.Decode(data)
+
+	if err != nil {
+		return err
+	}
+
+	err = dec.Decode(&struct{}{})
+	if err != io.EOF {
+		return errors.New("Body must have only one JSON value")
+	}
+
+	return nil
+}
